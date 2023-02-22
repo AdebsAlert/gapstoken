@@ -1,9 +1,7 @@
 export interface IPriceBot {
-  inputToken: string;
-  outputToken: string;
-  inputAmount: string;
-  uniswapReturn: string;
-  kyberExpectedRate: string;
-  kyberMinReturn: string;
+  tokenSymbol: string;
+  uniswapRate: string;
+  kyberRate: string;
   timestamp: string;
+  opportunity: string;
 }

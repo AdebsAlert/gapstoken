@@ -13,17 +13,12 @@ import { RequestPriceDto } from '../dtos/price-bot.dto';
 @Injectable()
 export class PriceBotService {
   async getPrices(args: RequestPriceDto) {
-    const {
-      inputTokenSymbol,
-      inputTokenAddress,
-      outputTokenSymbol,
-      outputTokenAddress,
-      inputAmount,
-    } = args;
+    const { tokenSymbol, tokenAddress } = args;
     // WEB3 CONFIG
     const web3 = new Web3(process.env.RPC_URL);
+    const inputTokenAddress = process.env.INPUT_TOKEN_ADDRESS;
 
-    const queryAmount = web3.utils.toWei(inputAmount, 'ether');
+    const queryAmount = web3.utils.toWei('1', 'ether');
 
     const uniswapFactoryContract = new web3.eth.Contract(
       UNISWAP_FACTORY_ABI as AbiItem[],
@@ -36,7 +31,7 @@ export class PriceBotService {
     );
 
     const exchangeAddress = await uniswapFactoryContract.methods
-      .getExchange(outputTokenAddress)
+      .getExchange(tokenAddress)
       .call();
     const exchangeContract = new web3.eth.Contract(
       UNISWAP_EXCHANGE_ABI as AbiItem[],
@@ -48,16 +43,19 @@ export class PriceBotService {
       .call();
 
     const kyberResult = await kyberRateContract.methods
-      .getExpectedRate(inputTokenAddress, outputTokenAddress, queryAmount)
+      .getExpectedRate(inputTokenAddress, tokenAddress, queryAmount)
       .call();
 
+    const minrate = Math.min(uniswapResult, kyberResult.expectedRate);
+    const maxrate = Math.max(uniswapResult, kyberResult.expectedRate);
+
+    const minMaxDifference = maxrate - minrate;
     const data: IPriceBot = {
-      inputToken: inputTokenSymbol,
-      outputToken: outputTokenSymbol,
-      inputAmount: web3.utils.fromWei(queryAmount, 'ether'),
-      uniswapReturn: web3.utils.fromWei(uniswapResult, 'ether'),
-      kyberExpectedRate: web3.utils.fromWei(kyberResult.expectedRate, 'ether'),
-      kyberMinReturn: web3.utils.fromWei(kyberResult.worstRate, 'ether'),
+      tokenSymbol,
+      uniswapRate: web3.utils.fromWei(uniswapResult, 'ether'),
+      //kyberExpectedRate: web3.utils.fromWei(kyberResult.worstRate, 'ether'),
+      kyberRate: web3.utils.fromWei(kyberResult.expectedRate, 'ether'),
+      opportunity: web3.utils.fromWei(minMaxDifference.toString(), 'ether'),
       timestamp: moment().tz('Africa/Lagos').format(),
     };
 
