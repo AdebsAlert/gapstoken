@@ -3,13 +3,7 @@ import { Injectable } from '@nestjs/common';
 import Web3 from 'web3';
 import { AbiItem } from 'web3-utils';
 
-import HDWalletProvider from '@truffle/hdwallet-provider';
-
 import moment from 'moment-timezone';
-
-import numeral from 'numeral';
-
-import _ from 'lodash';
 
 import { UNISWAP_EXCHANGE_ABI, UNISWAP_FACTORY_ABI } from '../abis/uniswap.abi';
 import { KYBER_RATE_ABI } from '../abis/kyber.abi';
